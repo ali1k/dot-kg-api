@@ -3,10 +3,7 @@
   "info" : {
     "description" : "Dot KG API",
     "version" : "1.0.0",
-    "title" : "Simple Inventory API",
-    "contact" : {
-      "email" : "you@your-company.com"
-    },
+    "title" : "Dot KG API",
     "license" : {
       "name" : "Apache 2.0",
       "url" : "http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -15,52 +12,66 @@
   "host" : "virtserver.swaggerhub.com",
   "basePath" : "/ali1k/Dot_KG_API/1.0.0",
   "tags" : [ {
-    "name" : "admins",
-    "description" : "Secured Admin-only calls"
+    "name" : "recommender API",
+    "description" : "suggest vacancies based on user interests"
   }, {
-    "name" : "developers",
-    "description" : "Operations available to regular developers"
+    "name" : "skills API",
+    "description" : "extract skills/vacncies relevant to a given occupation"
   } ],
-  "schemes" : [ "https" ],
+  "schemes" : [ "https", "http" ],
   "paths" : {
-    "/inventory" : {
+    "/api/v1/skillsFor/{occupation}" : {
       "get" : {
-        "tags" : [ "developers" ],
-        "summary" : "searches inventory",
-        "description" : "By passing in the appropriate options, you can search for\navailable inventory in the system\n",
-        "operationId" : "searchInventory",
+        "tags" : [ "skills API" ],
+        "summary" : "retrieve the list of skills for a given occupation",
+        "description" : "This API will retrieve the list of optional and essential skills for an occupation based on ESCO ontology\n",
         "produces" : [ "application/json" ],
         "parameters" : [ {
-          "name" : "searchString",
-          "in" : "query",
-          "description" : "pass an optional search string for looking up inventory",
-          "required" : false,
+          "name" : "occupation",
+          "in" : "path",
+          "description" : "occupation for which skills are extracted",
+          "required" : true,
           "type" : "string"
         }, {
-          "name" : "skip",
+          "name" : "include_optional",
           "in" : "query",
-          "description" : "number of records to skip for pagination",
+          "description" : "whether to include optional skills or not",
           "required" : false,
-          "type" : "integer",
-          "minimum" : 0,
-          "format" : "int32"
+          "type" : "number",
+          "default" : 0.0,
+          "enum" : [ 1.0, 0.0 ]
         }, {
-          "name" : "limit",
+          "name" : "language",
           "in" : "query",
-          "description" : "maximum number of records to return",
+          "description" : "language of the vacancy",
           "required" : false,
-          "type" : "integer",
-          "maximum" : 50,
-          "minimum" : 0,
-          "format" : "int32"
+          "type" : "string",
+          "default" : "all",
+          "enum" : [ "Dutch", "English", "all" ]
+        }, {
+          "name" : "algorithm",
+          "in" : "query",
+          "description" : "similarity algorithm used",
+          "required" : false,
+          "type" : "string",
+          "default" : "jaccard",
+          "enum" : [ "overlap", "jaccard" ]
+        }, {
+          "name" : "function",
+          "in" : "query",
+          "description" : "service line of the vacancy",
+          "required" : false,
+          "type" : "string",
+          "default" : "all",
+          "enum" : [ "all", "Consulting", "Risk Advisory", "Financial Advisory", "Audit and Assurance", "Tax and Legal", "Internal Services" ]
         } ],
         "responses" : {
           "200" : {
-            "description" : "search results matching criteria",
+            "description" : "list of skills and vacancies",
             "schema" : {
               "type" : "array",
               "items" : {
-                "$ref" : "#/definitions/InventoryItem"
+                "$ref" : "#/definitions/SkillRecomList"
               }
             }
           },
@@ -68,76 +79,140 @@
             "description" : "bad input parameter"
           }
         }
-      },
+      }
+    },
+    "/api/v1/recommender/" : {
       "post" : {
-        "tags" : [ "admins" ],
-        "summary" : "adds an inventory item",
-        "description" : "Adds an item to the system",
-        "operationId" : "addInventory",
+        "tags" : [ "recommender API" ],
+        "summary" : "recommends vacancies",
+        "description" : "Given a set of user interests, will return a list of vacancies",
+        "operationId" : "vacancyRecommendor",
         "consumes" : [ "application/json" ],
         "produces" : [ "application/json" ],
         "parameters" : [ {
           "in" : "body",
-          "name" : "inventoryItem",
-          "description" : "Inventory item to add",
-          "required" : false,
+          "name" : "tags",
+          "description" : "list of user tags",
+          "required" : true,
           "schema" : {
-            "$ref" : "#/definitions/InventoryItem"
+            "$ref" : "#/definitions/TagList"
           }
+        }, {
+          "name" : "language",
+          "in" : "query",
+          "description" : "language of the vacancy",
+          "required" : false,
+          "type" : "string",
+          "default" : "all",
+          "enum" : [ "Dutch", "English", "all" ]
+        }, {
+          "name" : "algorithm",
+          "in" : "query",
+          "description" : "similarity algorithm used",
+          "required" : false,
+          "type" : "string",
+          "default" : "jaccard",
+          "enum" : [ "overlap", "jaccard" ]
+        }, {
+          "name" : "function",
+          "in" : "query",
+          "description" : "service line of the vacancy",
+          "required" : false,
+          "type" : "string",
+          "default" : "all",
+          "enum" : [ "all", "Consulting", "Risk Advisory", "Financial Advisory", "Audit and Assurance", "Tax and Legal", "Internal Services" ]
         } ],
         "responses" : {
-          "201" : {
-            "description" : "item created"
-          },
-          "400" : {
-            "description" : "invalid input, object invalid"
-          },
-          "409" : {
-            "description" : "an existing item already exists"
+          "200" : {
+            "description" : "vacancies and teams matching criteria",
+            "schema" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/definitions/RecomList"
+              }
+            }
           }
         }
       }
     }
   },
   "definitions" : {
-    "InventoryItem" : {
+    "TeamItem" : {
       "type" : "object",
-      "required" : [ "id", "manufacturer", "name", "releaseDate" ],
       "properties" : {
         "id" : {
-          "type" : "string",
-          "format" : "uuid",
-          "example" : "d290f1ee-6c54-4b01-90e6-d701748f0851"
+          "type" : "number"
         },
         "name" : {
-          "type" : "string",
-          "example" : "Widget Adapter"
+          "type" : "string"
         },
-        "releaseDate" : {
-          "type" : "string",
-          "format" : "date-time",
-          "example" : "2016-08-29T09:12:33.001Z"
+        "code" : {
+          "type" : "number"
         },
-        "manufacturer" : {
-          "$ref" : "#/definitions/Manufacturer"
+        "similarity_score" : {
+          "type" : "number"
         }
       }
     },
-    "Manufacturer" : {
-      "required" : [ "name" ],
+    "SkillItem" : {
+      "type" : "object",
       "properties" : {
+        "ID" : {
+          "type" : "number"
+        },
+        "label" : {
+          "type" : "string"
+        }
+      }
+    },
+    "VacancyItem" : {
+      "type" : "object",
+      "properties" : {
+        "id" : {
+          "type" : "number"
+        },
         "name" : {
-          "type" : "string",
-          "example" : "ACME Corporation"
+          "type" : "string"
         },
-        "homePage" : {
-          "type" : "string",
-          "format" : "url",
-          "example" : "https://www.acme-corp.com"
+        "url" : {
+          "type" : "string"
         },
-        "phone" : {
-          "type" : "string",
-          "example" : "408-867-5309"
+        "similarity_score" : {
+          "type" : "number"
+        }
+      }
+    },
+    "TagList" : {
+      "type" : "array",
+      "items" : {
+        "type" : "string"
+      }
+    },
+    "RecomList" : {
+      "type" : "object",
+      "properties" : {
+        "vacanciesByTags" : {
+          "$ref" : "#/definitions/VacancyItem"
+        },
+        "vacanciesByESCO" : {
+          "$ref" : "#/definitions/VacancyItem"
+        },
+        "vacanciesByTeams" : {
+          "$ref" : "#/definitions/VacancyItem"
+        },
+        "teams" : {
+          "$ref" : "#/definitions/TeamItem"
+        }
+      }
+    },
+    "SkillRecomList" : {
+      "type" : "object",
+      "properties" : {
+        "skills" : {
+          "$ref" : "#/definitions/SkillItem"
+        },
+        "vacanciesByTags" : {
+          "$ref" : "#/definitions/VacancyItem"
         }
       }
     }
