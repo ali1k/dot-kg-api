@@ -24,7 +24,7 @@
       "get" : {
         "tags" : [ "skills API" ],
         "summary" : "retrieve the list of skills for a given occupation",
-        "description" : "This API will retrieve the list of optional and essential skills for an occupation based on ESCO ontology\n",
+        "description" : "This API will retrieve the list of optional and essential skills for an occupation based on ESCO ontology. An example url has the following pattern /api/v1/skillsFor/[occupation]/[include_optional?]/[language?]/[algorithm?]/[function?]\n",
         "produces" : [ "application/json" ],
         "parameters" : [ {
           "name" : "occupation",
@@ -85,7 +85,7 @@
       "post" : {
         "tags" : [ "recommender API" ],
         "summary" : "recommends vacancies",
-        "description" : "Given a set of user interests, will return a list of vacancies",
+        "description" : "Given a set of user interests, will return a list of vacancies. An example url has the following pattern /api/v1/recommender/[language?]/[algorithm?]/[function?]/[experience?]",
         "operationId" : "vacancyRecommendor",
         "consumes" : [ "application/json" ],
         "produces" : [ "application/json" ],
@@ -121,6 +121,14 @@
           "type" : "string",
           "default" : "all",
           "enum" : [ "all", "Consulting", "Risk Advisory", "Financial Advisory", "Audit and Assurance", "Tax and Legal", "Internal Services" ]
+        }, {
+          "name" : "experience",
+          "in" : "query",
+          "description" : "level of experience \"1\" means 0 - 2 years, \"2\" means 3 - 6 years, \"3\" means 7 - 10 years, \"4\" means 10+ years, \"all\" means all levels",
+          "required" : false,
+          "type" : "string",
+          "default" : "all",
+          "enum" : [ "1", "2", "3", "4", "all" ]
         } ],
         "responses" : {
           "200" : {
@@ -165,6 +173,26 @@
         }
       }
     },
+    "VacancyItem2" : {
+      "type" : "object",
+      "properties" : {
+        "id" : {
+          "type" : "number"
+        },
+        "name" : {
+          "type" : "string"
+        },
+        "url" : {
+          "type" : "string"
+        },
+        "similarity_score" : {
+          "type" : "number"
+        },
+        "source" : {
+          "type" : "string"
+        }
+      }
+    },
     "VacancyItem" : {
       "type" : "object",
       "properties" : {
@@ -191,6 +219,12 @@
     "RecomList" : {
       "type" : "object",
       "properties" : {
+        "processed_vacancies" : {
+          "$ref" : "#/definitions/VacancyItem2"
+        },
+        "vacanciesByTeamTags" : {
+          "$ref" : "#/definitions/VacancyItem"
+        },
         "vacanciesByTags" : {
           "$ref" : "#/definitions/VacancyItem"
         },
